@@ -46,7 +46,6 @@ if [ -d "$DIR/public/css" ]; then
     cp -r "$DIR/public/css/"* "$TMP_DIR/css/"
 fi
 [ -f "$DIR/public/favicon.svg" ] && cp "$DIR/public/favicon.svg" "$TMP_DIR/favicon.svg"
-[ -f "$DIR/public/favicon.ico" ] && cp "$DIR/public/favicon.ico" "$TMP_DIR/favicon.ico"
 
 # Bundle gitignored production .env
 cp "$ENV_SOURCE" "$TMP_DIR/.env"

@@ -3,9 +3,9 @@
 /**
  * InfinityFree Deployment Extractor & MySQL Provisioner (it0049-tsa3.infinityfreeapp.com).
  *
- * Unpacks summative3-infinityfree.zip into /htdocs, prepares storage directories,
+ * Unpacks summative3-infinityfree.zip into /htdocs, configures writable storage directories,
  * imports database/schema_export.sql using credentials from the unpacked .env file,
- * falls back to pre-seeded SQLite if MySQL provisioning fails, and self-deletes.
+ * falls back cleanly to pre-seeded SQLite if MySQL provisioning fails, and removes itself.
  */
 header('Content-Type: text/plain; charset=utf-8');
 
@@ -34,100 +34,151 @@ function parseDotEnv(string $path): array
     return $values;
 }
 
-$zipFile = __DIR__.'/summative3-infinityfree.zip';
+/**
+ * Execute SQL statements from a schema export while ignoring comments outside string literals.
+ */
+function executeSqlStatements(PDO $pdo, string $rawSql): void
+{
+    $buffer = '';
+    $inSingleQuote = false;
+    $inDoubleQuote = false;
+    $length = strlen($rawSql);
 
-if (! file_exists($zipFile)) {
-    http_response_code(404);
-    echo "ERROR: Deployment package not found at {$zipFile}\n";
-    exit(1);
-}
+    for ($i = 0; $i < $length; $i++) {
+        $char = $rawSql[$i];
+        $next = $i + 1 < $length ? $rawSql[$i + 1] : '';
 
-if (! class_exists('ZipArchive')) {
-    http_response_code(500);
-    echo "ERROR: ZipArchive extension is not enabled.\n";
-    exit(1);
-}
+        if (! $inSingleQuote && ! $inDoubleQuote) {
+            if ($char === '-' && $next === '-') {
+                $newlinePos = strpos($rawSql, "\n", $i);
+                $i = $newlinePos === false ? $length : $newlinePos;
 
-$zip = new ZipArchive;
-if ($zip->open($zipFile) !== true) {
-    http_response_code(500);
-    echo "ERROR: Unable to open {$zipFile}.\n";
-    exit(1);
-}
+                continue;
+            }
+            if ($char === '/' && $next === '*') {
+                $closePos = strpos($rawSql, '*/', $i + 2);
+                $i = $closePos === false ? $length : $closePos + 1;
 
-$extracted = $zip->extractTo(__DIR__);
-$zip->close();
-
-if (! $extracted) {
-    http_response_code(500);
-    echo 'ERROR: Failed extracting archive into '.__DIR__."\n";
-    exit(1);
-}
-
-@unlink($zipFile);
-echo "SUCCESS: Extracted summative3-infinityfree.zip.\n";
-
-if (file_exists(__DIR__.'/index2.html')) {
-    @unlink(__DIR__.'/index2.html');
-    echo "Removed InfinityFree placeholder index2.html.\n";
-}
-
-$storageDirs = [
-    __DIR__.'/storage/app/public',
-    __DIR__.'/storage/framework/cache/data',
-    __DIR__.'/storage/framework/sessions',
-    __DIR__.'/storage/framework/views',
-    __DIR__.'/storage/logs',
-    __DIR__.'/bootstrap/cache',
-];
-foreach ($storageDirs as $dir) {
-    if (! is_dir($dir)) {
-        @mkdir($dir, 0777, true);
-    }
-    @chmod($dir, 0777);
-}
-echo "Verified storage and cache directories.\n";
-
-$env = parseDotEnv(__DIR__.'/.env');
-$sqlFile = __DIR__.'/database/schema_export.sql';
-$dbHost = $env['DB_HOST'] ?? '';
-$dbName = $env['DB_DATABASE'] ?? '';
-$dbUser = $env['DB_USERNAME'] ?? '';
-$dbPass = $env['DB_PASSWORD'] ?? '';
-
-$mysqlSuccess = false;
-if ($dbHost !== '' && $dbName !== '' && $dbUser !== '' && file_exists($sqlFile)) {
-    try {
-        $dsn = "mysql:host={$dbHost};dbname={$dbName};charset=utf8mb4";
-        $pdo = new PDO($dsn, $dbUser, $dbPass, [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_TIMEOUT => 10,
-        ]);
-
-        $rawSql = file_get_contents($sqlFile);
-        $cleanSql = preg_replace(['!/\*.*?\*/!s', '/^--.*$/m'], '', $rawSql);
-        $statements = array_filter(array_map('trim', explode(';', $cleanSql)));
-
-        foreach ($statements as $stmt) {
-            if ($stmt !== '') {
-                $pdo->exec($stmt);
+                continue;
             }
         }
-        echo "SUCCESS: Provisioned MySQL schema and seed data in {$dbName} on {$dbHost}.\n";
-        $mysqlSuccess = true;
-    } catch (Throwable $e) {
-        echo 'NOTICE: MySQL provisioning failed ('.$e->getMessage().").\n";
+
+        if ($char === "'" && ! $inDoubleQuote && ($i === 0 || $rawSql[$i - 1] !== '\\')) {
+            $inSingleQuote = ! $inSingleQuote;
+        } elseif ($char === '"' && ! $inSingleQuote && ($i === 0 || $rawSql[$i - 1] !== '\\')) {
+            $inDoubleQuote = ! $inDoubleQuote;
+        }
+
+        if ($char === ';' && ! $inSingleQuote && ! $inDoubleQuote) {
+            $statement = trim($buffer);
+            if ($statement !== '') {
+                $pdo->exec($statement);
+            }
+            $buffer = '';
+
+            continue;
+        }
+
+        $buffer .= $char;
+    }
+
+    $trailing = trim($buffer);
+    if ($trailing !== '') {
+        $pdo->exec($trailing);
     }
 }
 
-$envFile = __DIR__.'/.env';
-$sqliteFile = __DIR__.'/database/database.sqlite';
-if (! $mysqlSuccess && file_exists($envFile) && file_exists($sqliteFile)) {
-    $envContent = file_get_contents($envFile);
-    $envContent = preg_replace('/^DB_CONNECTION=mysql$/m', 'DB_CONNECTION=sqlite', $envContent);
-    file_put_contents($envFile, $envContent);
-    echo "Fallback: configured pre-seeded SQLite connection in .env.\n";
-}
+$zipFile = __DIR__.'/summative3-infinityfree.zip';
 
-@unlink(__FILE__);
-echo "Removed extract.php.\n";
+try {
+    if (! file_exists($zipFile)) {
+        http_response_code(404);
+        echo "ERROR: Deployment package not found.\n";
+        exit(1);
+    }
+
+    if (! class_exists('ZipArchive')) {
+        http_response_code(500);
+        echo "ERROR: ZipArchive extension is not enabled.\n";
+        exit(1);
+    }
+
+    $zip = new ZipArchive;
+    if ($zip->open($zipFile) !== true) {
+        http_response_code(500);
+        echo "ERROR: Unable to open deployment package.\n";
+        exit(1);
+    }
+
+    $extracted = $zip->extractTo(__DIR__);
+    $zip->close();
+
+    if (! $extracted) {
+        http_response_code(500);
+        echo "ERROR: Failed extracting deployment package.\n";
+        exit(1);
+    }
+
+    @unlink($zipFile);
+    echo "SUCCESS: Extracted summative3-infinityfree.zip.\n";
+
+    if (file_exists(__DIR__.'/index2.html')) {
+        @unlink(__DIR__.'/index2.html');
+        echo "Removed InfinityFree placeholder index2.html.\n";
+    }
+
+    $storageDirs = [
+        __DIR__.'/storage/app/public',
+        __DIR__.'/storage/framework/cache/data',
+        __DIR__.'/storage/framework/sessions',
+        __DIR__.'/storage/framework/views',
+        __DIR__.'/storage/logs',
+        __DIR__.'/bootstrap/cache',
+    ];
+    foreach ($storageDirs as $dir) {
+        if (! is_dir($dir)) {
+            @mkdir($dir, 0755, true);
+        }
+        @chmod($dir, 0755);
+    }
+    echo "Verified storage and cache directories.\n";
+
+    $env = parseDotEnv(__DIR__.'/.env');
+    $sqlFile = __DIR__.'/database/schema_export.sql';
+    $dbHost = $env['DB_HOST'] ?? '';
+    $dbName = $env['DB_DATABASE'] ?? '';
+    $dbUser = $env['DB_USERNAME'] ?? '';
+    $dbPass = $env['DB_PASSWORD'] ?? '';
+
+    $mysqlSuccess = false;
+    if ($dbHost !== '' && $dbName !== '' && $dbUser !== '' && file_exists($sqlFile)) {
+        try {
+            $dsn = "mysql:host={$dbHost};dbname={$dbName};charset=utf8mb4";
+            $pdo = new PDO($dsn, $dbUser, $dbPass, [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_TIMEOUT => 10,
+            ]);
+
+            executeSqlStatements($pdo, (string) file_get_contents($sqlFile));
+            echo "SUCCESS: Provisioned MySQL schema and seed data.\n";
+            $mysqlSuccess = true;
+        } catch (Throwable) {
+            echo "NOTICE: MySQL provisioning did not succeed; falling back to SQLite.\n";
+        }
+    }
+
+    $envFile = __DIR__.'/.env';
+    $sqliteFile = __DIR__.'/database/database.sqlite';
+    if (! $mysqlSuccess && file_exists($envFile) && file_exists($sqliteFile)) {
+        $envContent = (string) file_get_contents($envFile);
+        $envContent = preg_replace('/^DB_CONNECTION=mysql$/m', 'DB_CONNECTION=sqlite', $envContent);
+        $envContent = preg_replace('/^DB_DATABASE=.*$/m', 'DB_DATABASE='.$sqliteFile, $envContent);
+        file_put_contents($envFile, $envContent);
+        echo "Fallback: configured pre-seeded SQLite connection in .env.\n";
+    }
+} finally {
+    if (file_exists(__FILE__)) {
+        @unlink(__FILE__);
+        echo "Removed extract.php.\n";
+    }
+}

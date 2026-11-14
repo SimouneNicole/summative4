@@ -67,10 +67,18 @@ def deploy() -> None:
     password = creds["FTP_PASS"]
 
     print(f"Connecting to FTP {host}:{port} as {user} ...")
-    ftp = ftplib.FTP(timeout=45)
-    ftp.connect(host, port)
-    ftp.login(user, password)
-    print("FTP connected and authenticated.")
+    try:
+        ftp: ftplib.FTP = ftplib.FTP_TLS(timeout=45)
+        ftp.connect(host, port)
+        ftp.auth()
+        ftp.prot_p()
+        ftp.login(user, password)
+        print("FTPS (TLS) connected and authenticated.")
+    except Exception:
+        ftp = ftplib.FTP(timeout=45)
+        ftp.connect(host, port)
+        ftp.login(user, password)
+        print("FTP connected and authenticated.")
 
     try:
         ftp.cwd("htdocs")

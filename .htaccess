@@ -5,7 +5,7 @@
 Options -Indexes
 Options +FollowSymlinks
 
-<FilesMatch "(^\.|composer\.(json|lock)|package(-lock)?\.json|artisan|phpunit\.xml)">
+<FilesMatch "(^\.|composer\.(json|lock)|package(-lock)?\.json|vite\.config\.js|artisan|phpunit\.xml|README\.md|LICENSE|\.(zip|sh|py|sqlite|sql|env)$)">
     <IfModule mod_authz_core.c>
         Require all denied
     </IfModule>
@@ -20,7 +20,8 @@ Options +FollowSymlinks
 
     # Block direct web access to application internals, config, scripts, and tests
     RewriteRule ^(app|bootstrap|config|database|resources|routes|scripts|storage|tests|vendor)/.* - [F,L,NC]
-    RewriteRule ^(\.env|env\.production(\.example)?|\.git|composer\.(json|lock)|package(-lock)?\.json|artisan|phpunit\.xml) - [F,L,NC]
+    RewriteRule ^(\.env|env\.production(\.example)?|\.git|composer\.(json|lock)|package(-lock)?\.json|vite\.config\.js|artisan|phpunit\.xml|README\.md|LICENSE) - [F,L,NC]
+    RewriteRule \.(zip|sh|py|sqlite|sql)$ - [F,L,NC]
 
     # Forward Authorization header
     RewriteCond %{HTTP:Authorization} .
