@@ -15,19 +15,4 @@ class User extends Model
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory;
-
-    protected $table = 'users';
-
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
-    {
-        return [
-            'created_at' => 'datetime',
-            'updated_at' => 'datetime',
-        ];
-    }
 }

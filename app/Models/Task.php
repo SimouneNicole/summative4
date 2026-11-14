@@ -14,8 +14,6 @@ use Illuminate\Database\Eloquent\Model;
 #[Fillable(['title', 'status', 'task_date'])]
 class Task extends Model
 {
-    protected $table = 'tasks';
-
     /**
      * Get the attributes that should be cast.
      *
@@ -26,8 +24,6 @@ class Task extends Model
         return [
             'status' => TaskStatus::class,
             'task_date' => 'date',
-            'created_at' => 'datetime',
-            'updated_at' => 'datetime',
         ];
     }
 
@@ -37,6 +33,7 @@ class Task extends Model
     #[Scope]
     protected function forToday(Builder $query): void
     {
+        // Uses whereDate so SQLite Y-m-d 00:00:00 and MySQL DATE values match identically.
         $query->whereDate('task_date', now()->toDateString());
     }
 

@@ -37,11 +37,11 @@ CREATE TABLE `tasks` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO `tasks` (`title`, `status`, `task_date`, `created_at`, `updated_at`) VALUES
+('Prepare Quarterly Reports', 'pending', DATE_SUB(CURDATE(), INTERVAL 1 DAY), NOW(), NOW()),
+('Pitch Deck', 'pending', DATE_SUB(CURDATE(), INTERVAL 1 DAY), NOW(), NOW()),
 ('Meeting', 'ongoing', CURDATE(), NOW(), NOW()),
 ('Project deployment', 'completed', CURDATE(), NOW(), NOW()),
 ('Review Investor Feedback', 'completed', CURDATE(), NOW(), NOW()),
-('Prepare Quarterly Reports', 'pending', DATE_SUB(CURDATE(), INTERVAL 1 DAY), NOW(), NOW()),
-('Pitch Deck', 'pending', DATE_SUB(CURDATE(), INTERVAL 1 DAY), NOW(), NOW()),
 ('Meeting with Marketing', 'pending', DATE_ADD(CURDATE(), INTERVAL 1 DAY), NOW(), NOW()),
 ('Review the monthly budget', 'ongoing', DATE_ADD(CURDATE(), INTERVAL 1 DAY), NOW(), NOW()),
 ('Finalize client onboarding checklist', 'pending', DATE_ADD(CURDATE(), INTERVAL 2 DAY), NOW(), NOW()),

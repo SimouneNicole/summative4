@@ -9,13 +9,23 @@ use Illuminate\Database\Seeder;
 class TaskSeeder extends Seeder
 {
     /**
-     * Seed 9 tasks across 4 distinct dates (yesterday, today, tomorrow, +2 days).
+     * Seed 9 tasks across 4 distinct dates (yesterday, today, tomorrow, +2 days) idempotently.
      */
     public function run(): void
     {
         $today = now()->startOfDay();
 
         $tasks = [
+            [
+                'title' => 'Prepare Quarterly Reports',
+                'status' => TaskStatus::Pending,
+                'task_date' => $today->copy()->subDay()->toDateString(),
+            ],
+            [
+                'title' => 'Pitch Deck',
+                'status' => TaskStatus::Pending,
+                'task_date' => $today->copy()->subDay()->toDateString(),
+            ],
             [
                 'title' => 'Meeting',
                 'status' => TaskStatus::Ongoing,
@@ -30,16 +40,6 @@ class TaskSeeder extends Seeder
                 'title' => 'Review Investor Feedback',
                 'status' => TaskStatus::Completed,
                 'task_date' => $today->toDateString(),
-            ],
-            [
-                'title' => 'Prepare Quarterly Reports',
-                'status' => TaskStatus::Pending,
-                'task_date' => $today->copy()->subDay()->toDateString(),
-            ],
-            [
-                'title' => 'Pitch Deck',
-                'status' => TaskStatus::Pending,
-                'task_date' => $today->copy()->subDay()->toDateString(),
             ],
             [
                 'title' => 'Meeting with Marketing',
@@ -63,16 +63,16 @@ class TaskSeeder extends Seeder
             ],
         ];
 
-        foreach ($tasks as $task) {
-            Task::query()->firstOrCreate(
-                [
-                    'title' => $task['title'],
-                    'task_date' => $task['task_date'],
-                ],
-                [
-                    'status' => $task['status'],
-                ]
-            );
+        foreach ($tasks as $item) {
+            // Query with whereDate so repeated seeding remains idempotent on SQLite and MySQL.
+            $exists = Task::query()
+                ->where('title', $item['title'])
+                ->whereDate('task_date', $item['task_date'])
+                ->exists();
+
+            if (! $exists) {
+                Task::query()->create($item);
+            }
         }
     }
 }
