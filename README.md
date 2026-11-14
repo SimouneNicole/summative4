@@ -1,58 +1,113 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Tasks for Today Management System — IT0049 TSA3 (Laravel)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A Laravel 13 task management application built for **IT0049 (Web System Technologies) — Technical Summative Assessment 3 (TSA3)**. It rebuilds the CodeIgniter 4 TSA1 Tasks for Today Management System (`SimouneNicole/summative1`) with Laravel schema migrations, seeders, Eloquent ORM local query scopes, and Blade views styled in the **Liquid Glass** interface.
 
-## About Laravel
+- **Developer:** Simoune Nicole
+- **GitHub Repository:** [SimouneNicole/summative3](https://github.com/SimouneNicole/summative3)
+- **Live Deployment:** [https://it0049-tsa3.infinityfreeapp.com](https://it0049-tsa3.infinityfreeapp.com)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## System Requirements
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- **PHP**: 8.3 or higher (`pdo_sqlite`, `pdo_mysql`, `mbstring`, `openssl`, `tokenizer`, `xml`, `ctype`, `json`)
+- **Composer**: 2.0 or higher
+- **Database**: SQLite 3 (local development/testing) or MySQL / MariaDB (production)
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Local Setup & Running
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/SimouneNicole/summative3.git
+   cd summative3
+   ```
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+2. **Install Composer dependencies**:
+   ```bash
+   composer install
+   ```
 
-## Agentic Development
+3. **Configure environment and key**:
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+4. **Create SQLite database, run migrations, and seed data**:
+   ```bash
+   touch database/database.sqlite
+   php artisan migrate:fresh --seed
+   ```
+   *(For MySQL, update `DB_CONNECTION=mysql` and database credentials in `.env`, or import `database/schema_export.sql` into phpMyAdmin.)*
+
+5. **Run the development server**:
+   ```bash
+   php artisan serve --port 8080
+   ```
+   Open [http://localhost:8080](http://localhost:8080) in your browser.
+
+---
+
+## Application Routes
+
+| Method | URI | Controller Action | Eloquent Query | Purpose |
+| :--- | :--- | :--- | :--- | :--- |
+| `GET` | `/` | `WelcomeController@index` | `Task::forToday()->orderBy('id')->get()` | Displays only tasks scheduled for today's date |
+| `GET` | `/tasks` | `TaskController@index` | `Task::orderedByDate()->get()` | Displays all tasks ordered chronologically by `task_date` |
+| `GET` | `/profile` | `ProfileController@index` | `User::query()->first()` | Displays the single user profile record |
+| `GET` | `/about` | `AboutController@index` | Static view | Identifies Simoune Nicole as developer and summarizes architecture |
+
+---
+
+## Database Schema, Models & Seed Data
+
+### Migrations (`database/migrations/`)
+- `users` (`0001_01_01_000000_create_users_table.php`):
+  - `id` (`BIGINT UNSIGNED PK`)
+  - `username` (`VARCHAR(50) UNIQUE`)
+  - `full_name` (`VARCHAR(100)`)
+  - `email` (`VARCHAR(100)`)
+  - `created_at`, `updated_at` (`TIMESTAMPS`)
+- `tasks` (`2026_11_14_000001_create_tasks_table.php`):
+  - `id` (`BIGINT UNSIGNED PK`)
+  - `title` (`VARCHAR(255)`)
+  - `status` (`VARCHAR(20) DEFAULT 'pending'`, cast via `App\Enums\TaskStatus`: `pending`, `ongoing`, `completed`)
+  - `task_date` (`DATE INDEX`)
+  - `created_at`, `updated_at` (`TIMESTAMPS`)
+
+### Eloquent Models (`app/Models/`)
+- `App\Models\Task`: casts `task_date` (`date`) and `status` (`TaskStatus` enum) and defines Laravel 13 `#[Scope]` local scopes `forToday()` and `orderedByDate()`.
+- `App\Models\User`: maps the `users` table (`username`, `full_name`, `email`).
+
+### Seeders (`database/seeders/`)
+- `UserSeeder`: seeds 1 canonical user (`Kat.1na`, `Katarina Ivanov`, `katarina.ivanov@gmail.com`).
+- `TaskSeeder`: seeds 9 tasks spanning 4 distinct dates (yesterday, today, tomorrow, and +2 days), preserving all original TSA1 titles and workflow states.
+- `DatabaseSeeder`: executes `[UserSeeder::class, TaskSeeder::class]`.
+
+---
+
+## Automated Testing
+
+Run the PHPUnit test suite against an isolated in-memory SQLite database:
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+php artisan test
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+The test suite verifies seeder record counts (`1` user, `>= 8` tasks across `>= 3` dates), Eloquent `forToday` and `orderedByDate` scopes, database schema constraints (`status` default `'pending'`, unique `username`), and HTTP 200 content assertions for `/`, `/tasks`, `/profile`, and `/about`.
 
-## Contributing
+---
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## InfinityFree Deployment
 
-## Code of Conduct
+1. Copy `env.production.example` to `env.production` and set `APP_KEY` and `DB_PASSWORD`.
+2. Run `./build-infinityfree-zip.sh` (or `./deploy-infinityfree.sh` to upload via FTP).
+3. Open `extract.php` on the live domain to unpack assets, configure storage permissions, and provision MySQL from `database/schema_export.sql`.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+---
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Licensed under the [MIT License](LICENSE).
