@@ -17,7 +17,6 @@ class WelcomeController extends Controller
 
         return view('welcome', [
             'title' => 'Tasks for Today',
-            'activePage' => 'welcome',
             'todayDate' => $today->format('l, F j, Y'),
             'tasks' => $tasks,
         ]);

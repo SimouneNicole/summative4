@@ -13,7 +13,6 @@ class AboutController extends Controller
     {
         return view('about', [
             'title' => 'About',
-            'activePage' => 'about',
         ]);
     }
 }

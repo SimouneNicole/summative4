@@ -16,7 +16,6 @@ class TaskController extends Controller
 
         return view('tasks', [
             'title' => 'All Tasks',
-            'activePage' => 'tasks',
             'tasks' => $tasks,
         ]);
     }

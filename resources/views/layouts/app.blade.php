@@ -2,21 +2,19 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     @php
-        $protocolRelative = static fn (string $path): string => preg_replace('~^https?:~', '', asset($path));
         $navItems = [
-            ['key' => 'welcome', 'label' => 'Welcome', 'route' => route('welcome')],
-            ['key' => 'tasks', 'label' => 'Tasks', 'route' => route('tasks.index')],
-            ['key' => 'profile', 'label' => 'Profile', 'route' => route('profile.index')],
-            ['key' => 'about', 'label' => 'About', 'route' => route('about')],
+            ['routeName' => 'welcome', 'label' => 'Welcome'],
+            ['routeName' => 'tasks.index', 'label' => 'Tasks'],
+            ['routeName' => 'profile.index', 'label' => 'Profile'],
+            ['routeName' => 'about', 'label' => 'About'],
         ];
     @endphp
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $title ?? 'Tasks for Today' }} | Tasker</title>
     <meta name="description" content="Tasks for Today Management System built with Laravel Eloquent ORM and migrations.">
-    <link rel="icon" type="image/svg+xml" href="{{ $protocolRelative('favicon.svg') }}">
-    <link rel="alternate icon" href="{{ $protocolRelative('favicon.ico') }}">
-    <link rel="stylesheet" href="{{ $protocolRelative('css/style.css') }}">
+    <link rel="icon" type="image/svg+xml" href="{{ preg_replace('~^https?:~', '', asset('favicon.svg')) }}">
+    <link rel="stylesheet" href="{{ preg_replace('~^https?:~', '', asset('css/style.css')) }}">
 </head>
 <body>
     <a href="#main-content" class="skip-link">Skip to main content</a>
@@ -35,8 +33,8 @@
                 <div class="nav-divider" aria-hidden="true"></div>
                 <div class="nav-links">
                     @foreach ($navItems as $item)
-                        @php $isCurrent = ($activePage ?? '') === $item['key']; @endphp
-                        <a href="{{ $item['route'] }}"
+                        @php $isCurrent = request()->routeIs($item['routeName']); @endphp
+                        <a href="{{ route($item['routeName']) }}"
                            class="nav-item {{ $isCurrent ? 'is-active' : '' }}"
                            @if($isCurrent) aria-current="page" @endif>
                             {{ $item['label'] }}

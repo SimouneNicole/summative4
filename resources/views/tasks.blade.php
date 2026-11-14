@@ -7,7 +7,7 @@
             <h1 id="tasks-heading" class="page-title">All Tasks</h1>
             <p class="page-subtitle">Complete task schedule ordered chronologically by scheduled date.</p>
         </div>
-        <span class="header-meta">{{ $tasks->count() }} {{ $tasks->count() === 1 ? 'task' : 'tasks' }}</span>
+        <span class="header-meta">{{ $tasks->count() }} {{ \Illuminate\Support\Str::plural('task', $tasks->count()) }}</span>
     </div>
 
     <div class="glass-panel">
@@ -31,9 +31,9 @@
                         @foreach ($tasks as $task)
                             <tr>
                                 <td class="cell-id">{{ $task->id }}</td>
-                                <td class="cell-primary">{{ $task->title }}</td>
+                                <td class="cell-primary cell-task">{{ $task->title }}</td>
                                 <td class="cell-date">{{ $task->task_date->format('Y-m-d') }}</td>
-                                <td>
+                                <td class="cell-status">
                                     <x-status-badge :status="$task->status" />
                                 </td>
                             </tr>

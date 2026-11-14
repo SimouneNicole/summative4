@@ -12,7 +12,7 @@ enum TaskStatus: string
     case Completed = 'completed';
 
     /**
-     * Human-readable badge text for the status.
+     * Human-readable label for the status.
      */
     public function label(): string
     {
@@ -21,13 +21,5 @@ enum TaskStatus: string
             self::Ongoing => 'Ongoing',
             self::Completed => 'Completed',
         };
-    }
-
-    /**
-     * CSS modifier class paired with the status pill.
-     */
-    public function cssClass(): string
-    {
-        return 'status-pill--'.$this->value;
     }
 }

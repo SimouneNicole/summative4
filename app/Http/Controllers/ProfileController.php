@@ -12,12 +12,9 @@ class ProfileController extends Controller
      */
     public function index(): View
     {
-        $user = User::query()->first();
-
         return view('profile', [
             'title' => 'Profile',
-            'activePage' => 'profile',
-            'user' => $user,
+            'user' => User::query()->first(),
         ]);
     }
 }

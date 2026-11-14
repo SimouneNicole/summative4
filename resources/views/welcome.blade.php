@@ -7,7 +7,7 @@
             <h1 id="welcome-heading" class="page-title">Tasks for Today</h1>
             <p class="page-subtitle">Agenda scheduled for {{ $todayDate }}.</p>
         </div>
-        <span class="header-meta">{{ $tasks->count() }} {{ $tasks->count() === 1 ? 'task' : 'tasks' }}</span>
+        <span class="header-meta">{{ $tasks->count() }} {{ \Illuminate\Support\Str::plural('task', $tasks->count()) }}</span>
     </div>
 
     <div class="glass-panel">

@@ -1,3 +1,3 @@
 @props(['status'])
 
-<span class="status-pill {{ $status->cssClass() }}">{{ $status->label() }}</span>
+<span class="status-pill status-pill--{{ $status->value }}">{{ $status->label() }}</span>

@@ -13,12 +13,14 @@ class TaskerTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_seeder_populates_one_user_and_at_least_eight_tasks_across_three_or_more_dates(): void
+    public function test_seeder_is_idempotent_and_populates_required_user_and_task_dates(): void
     {
+        $this->seed();
         $this->seed();
 
         $this->assertDatabaseCount('users', 1);
         $this->assertSame(1, User::query()->count());
+        $this->assertSame(9, Task::query()->count());
         $this->assertGreaterThanOrEqual(8, Task::query()->count());
 
         $distinctDates = Task::query()->distinct()->count('task_date');
@@ -26,25 +28,36 @@ class TaskerTest extends TestCase
         $this->assertGreaterThanOrEqual(1, Task::forToday()->count());
     }
 
-    public function test_eloquent_scopes_filter_today_and_order_tasks_chronologically(): void
+    public function test_eloquent_scopes_filter_today_and_order_even_when_inserted_out_of_order(): void
     {
-        $this->seed();
+        Task::query()->create([
+            'title' => 'Future task added first',
+            'status' => TaskStatus::Pending,
+            'task_date' => now()->addDays(2)->toDateString(),
+        ]);
+
+        Task::query()->create([
+            'title' => 'Today task added second',
+            'status' => TaskStatus::Ongoing,
+            'task_date' => now()->toDateString(),
+        ]);
+
+        Task::query()->create([
+            'title' => 'Past task added third',
+            'status' => TaskStatus::Completed,
+            'task_date' => now()->subDay()->toDateString(),
+        ]);
 
         $todayTasks = Task::forToday()->get();
-        $this->assertCount(3, $todayTasks);
-        $this->assertTrue(
-            $todayTasks->every(fn (Task $task): bool => $task->task_date->toDateString() === now()->toDateString())
-        );
+        $this->assertCount(1, $todayTasks);
+        $this->assertSame('Today task added second', $todayTasks->first()->title);
 
-        $orderedTasks = Task::orderedByDate()->get();
-        $dates = $orderedTasks->map(fn (Task $task): string => $task->task_date->toDateString())->values()->all();
-        $sortedDates = $dates;
-        sort($sortedDates);
-
-        $this->assertSame($sortedDates, $dates);
-        $this->assertSame(TaskStatus::Ongoing, $orderedTasks->firstWhere('title', 'Meeting')->status);
-        $this->assertSame(TaskStatus::Completed, $orderedTasks->firstWhere('title', 'Project deployment')->status);
-        $this->assertSame(TaskStatus::Pending, $orderedTasks->firstWhere('title', 'Prepare Quarterly Reports')->status);
+        $orderedTitles = Task::orderedByDate()->pluck('title')->all();
+        $this->assertSame([
+            'Past task added third',
+            'Today task added second',
+            'Future task added first',
+        ], $orderedTitles);
     }
 
     public function test_task_status_defaults_to_pending_and_username_is_unique(): void
