@@ -23,6 +23,9 @@ rsync -av \
   --exclude="node_modules" \
   --exclude="tests" \
   --exclude="scripts" \
+  --exclude="storage/framework/views/*.php" \
+  --exclude="storage/framework/sessions/*" \
+  --exclude="storage/logs/*.log" \
   --exclude="*.zip" \
   --exclude="env.production" \
   --exclude="env.production.example" \
@@ -53,7 +56,11 @@ cp "$ENV_SOURCE" "$TMP_DIR/.env"
 # Ensure schema export, pre-seeded SQLite fallback, and writable storage directories exist
 mkdir -p "$TMP_DIR/database"
 [ -f "$DIR/database/schema_export.sql" ] && cp "$DIR/database/schema_export.sql" "$TMP_DIR/database/schema_export.sql"
-[ -f "$DIR/database/database.sqlite" ] && cp "$DIR/database/database.sqlite" "$TMP_DIR/database/database.sqlite"
+if [ -f "$DIR/database/database.sqlite" ]; then
+    cp "$DIR/database/database.sqlite" "$TMP_DIR/database/database.sqlite"
+else
+    touch "$TMP_DIR/database/database.sqlite"
+fi
 
 mkdir -p "$TMP_DIR/storage/app/public" \
          "$TMP_DIR/storage/framework/cache/data" \

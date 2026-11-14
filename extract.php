@@ -93,21 +93,18 @@ $zipFile = __DIR__.'/summative3-infinityfree.zip';
 try {
     if (! file_exists($zipFile)) {
         http_response_code(404);
-        echo "ERROR: Deployment package not found.\n";
-        exit(1);
+        throw new RuntimeException('Deployment package not found.');
     }
 
     if (! class_exists('ZipArchive')) {
         http_response_code(500);
-        echo "ERROR: ZipArchive extension is not enabled.\n";
-        exit(1);
+        throw new RuntimeException('ZipArchive extension is not enabled.');
     }
 
     $zip = new ZipArchive;
     if ($zip->open($zipFile) !== true) {
         http_response_code(500);
-        echo "ERROR: Unable to open deployment package.\n";
-        exit(1);
+        throw new RuntimeException('Unable to open deployment package.');
     }
 
     $extracted = $zip->extractTo(__DIR__);
@@ -115,8 +112,7 @@ try {
 
     if (! $extracted) {
         http_response_code(500);
-        echo "ERROR: Failed extracting deployment package.\n";
-        exit(1);
+        throw new RuntimeException('Failed extracting deployment package.');
     }
 
     @unlink($zipFile);
@@ -176,6 +172,11 @@ try {
         file_put_contents($envFile, $envContent);
         echo "Fallback: configured pre-seeded SQLite connection in .env.\n";
     }
+} catch (Throwable $e) {
+    if (http_response_code() < 400) {
+        http_response_code(500);
+    }
+    echo 'ERROR: '.$e->getMessage()."\n";
 } finally {
     if (file_exists(__FILE__)) {
         @unlink(__FILE__);

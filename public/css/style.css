@@ -300,6 +300,7 @@ a {
   font-size: 0.96875rem;
   font-weight: 500;
   color: var(--color-ink);
+  overflow-wrap: anywhere;
 }
 
 .agenda-date {
@@ -614,6 +615,7 @@ a {
     grid-area: title;
     font-size: 0.96875rem;
     line-height: 1.35;
+    overflow-wrap: anywhere;
   }
 
   .data-table td.cell-date {

@@ -1,7 +1,10 @@
 <?php
 
 use Illuminate\Support\Str;
-use Pdo\Mysql;
+
+$mysqlSslAttr = class_exists(\Pdo\Mysql::class)
+    ? \Pdo\Mysql::ATTR_SSL_CA
+    : (defined('PDO::MYSQL_ATTR_SSL_CA') ? PDO::MYSQL_ATTR_SSL_CA : null);
 
 return [
 
@@ -60,8 +63,8 @@ return [
             'strict' => true,
             'engine' => null,
             'timezone' => env('DB_TIMEZONE', '+08:00'),
-            'options' => extension_loaded('pdo_mysql') ? array_filter([
-                Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            'options' => extension_loaded('pdo_mysql') && $mysqlSslAttr !== null ? array_filter([
+                $mysqlSslAttr => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
         ],
 
@@ -81,8 +84,8 @@ return [
             'strict' => true,
             'engine' => null,
             'timezone' => env('DB_TIMEZONE', '+08:00'),
-            'options' => extension_loaded('pdo_mysql') ? array_filter([
-                Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            'options' => extension_loaded('pdo_mysql') && $mysqlSslAttr !== null ? array_filter([
+                $mysqlSslAttr => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
         ],
 
