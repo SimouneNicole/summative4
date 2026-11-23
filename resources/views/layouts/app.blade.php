@@ -3,16 +3,17 @@
 <head>
     @php
         $navItems = [
-            ['routeName' => 'welcome', 'label' => 'Welcome'],
-            ['routeName' => 'tasks.index', 'label' => 'Tasks'],
-            ['routeName' => 'profile.index', 'label' => 'Profile'],
-            ['routeName' => 'about', 'label' => 'About'],
+            ['routeName' => 'welcome', 'match' => 'welcome', 'label' => 'Welcome'],
+            ['routeName' => 'tasks.index', 'match' => 'tasks.*', 'label' => 'Tasks'],
+            ['routeName' => 'profile.index', 'match' => 'profile.*', 'label' => 'Profile'],
+            ['routeName' => 'about', 'match' => 'about', 'label' => 'About'],
         ];
     @endphp
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? 'Tasks for Today' }} | Tasker</title>
-    <meta name="description" content="Tasks for Today Management System built with Laravel Eloquent ORM and migrations.">
+    <meta name="description" content="Tasks for Today Management System built with Laravel Eloquent ORM, Breeze authentication, and completion email notifications.">
     <link rel="icon" type="image/svg+xml" href="{{ preg_replace('~^https?:~', '', asset('favicon.svg')) }}">
     <link rel="stylesheet" href="{{ preg_replace('~^https?:~', '', asset('css/style.css')) }}">
 </head>
@@ -33,7 +34,7 @@
                 <div class="nav-divider" aria-hidden="true"></div>
                 <div class="nav-links">
                     @foreach ($navItems as $item)
-                        @php $isCurrent = request()->routeIs($item['routeName']); @endphp
+                        @php $isCurrent = request()->routeIs($item['match']); @endphp
                         <a href="{{ route($item['routeName']) }}"
                            class="nav-item {{ $isCurrent ? 'is-active' : '' }}"
                            @if($isCurrent) aria-current="page" @endif>
@@ -41,16 +42,36 @@
                         </a>
                     @endforeach
                 </div>
+                <div class="nav-divider" aria-hidden="true"></div>
+                <div class="nav-auth">
+                    @auth
+                        <a href="{{ route('account.profile.edit') }}" class="nav-user-pill" title="Account Settings">
+                            {{ Auth::user()->full_name ?: Auth::user()->username }}
+                        </a>
+                        <form method="POST" action="{{ route('logout') }}" class="nav-logout-form">
+                            @csrf
+                            <button type="submit" class="nav-item nav-logout-btn">Log out</button>
+                        </form>
+                    @else
+                        <a href="{{ route('login') }}" class="nav-item {{ request()->routeIs('login') ? 'is-active' : '' }}">Log in</a>
+                        <a href="{{ route('register') }}" class="nav-item nav-register-pill {{ request()->routeIs('register') ? 'is-active' : '' }}">Register</a>
+                    @endauth
+                </div>
             </nav>
         </header>
 
         <main id="main-content" class="content-stage" tabindex="-1">
-            @yield('content')
+            @include('partials.flash')
+            @hasSection('content')
+                @yield('content')
+            @else
+                {{ $slot ?? '' }}
+            @endif
         </main>
 
         <footer class="site-footer">
             <span>Tasks for Today Management System</span>
-            <span>Simoune Nicole &middot; IT0049 TSA3</span>
+            <span>Simoune Nicole &middot; IT0049 TSA4</span>
         </footer>
     </div>
 </body>

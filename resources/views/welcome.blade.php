@@ -34,6 +34,9 @@
 
     <div class="section-actions">
         <a href="{{ route('tasks.index') }}" class="btn-primary">View All Tasks</a>
+        @auth
+            <a href="{{ route('tasks.create') }}" class="btn-secondary">+ New Task</a>
+        @endauth
     </div>
 </section>
 @endsection
