@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'tasker' => [
+        'notification_email' => env('TASK_NOTIFICATION_EMAIL', 'katarina.ivanov@gmail.com'),
+    ],
+
 ];

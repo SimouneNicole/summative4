@@ -4,11 +4,12 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
     /**
-     * Seed the single canonical TSA1/TSA3 user record.
+     * Seed the canonical TSA user account with Breeze authentication credentials.
      */
     public function run(): void
     {
@@ -17,6 +18,8 @@ class UserSeeder extends Seeder
             [
                 'full_name' => 'Katarina Ivanov',
                 'email' => 'katarina.ivanov@gmail.com',
+                'email_verified_at' => now(),
+                'password' => Hash::make('password'),
             ]
         );
     }
