@@ -29,7 +29,7 @@ CREATE TABLE `users` (
 
 -- Demo password for seeded user: "password"
 INSERT INTO `users` (`id`, `username`, `full_name`, `email`, `email_verified_at`, `password`, `created_at`, `updated_at`) VALUES
-(1, 'Kat.1na', 'Katarina Ivanov', 'katarina.ivanov@gmail.com', NOW(), '$2y$12$eImiTXuWVxfM37uY4JANjQ==', NOW(), NOW());
+(1, 'Kat.1na', 'Katarina Ivanov', 'katarina.ivanov@gmail.com', NOW(), '$2y$12$kJ/cwl5AgNj4PENOUJ8jHuxc4laYbUPPT71C5POTXUBuMlteg5ksC', NOW(), NOW());
 
 CREATE TABLE `password_reset_tokens` (
   `email` varchar(255) NOT NULL,
