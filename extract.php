@@ -1,9 +1,9 @@
 <?php
 
 /**
- * InfinityFree Deployment Extractor & MySQL Provisioner (it0049-tsa3.infinityfreeapp.com).
+ * InfinityFree Deployment Extractor & MySQL Provisioner (IT0049 TSA4).
  *
- * Unpacks summative3-infinityfree.zip into /htdocs, configures writable storage directories,
+ * Unpacks summative4-infinityfree.zip into /htdocs, configures writable storage directories,
  * imports database/schema_export.sql using credentials from the unpacked .env file,
  * falls back cleanly to pre-seeded SQLite if MySQL provisioning fails, and removes itself.
  */
@@ -88,7 +88,7 @@ function executeSqlStatements(PDO $pdo, string $rawSql): void
     }
 }
 
-$zipFile = __DIR__.'/summative3-infinityfree.zip';
+$zipFile = __DIR__.'/summative4-infinityfree.zip';
 
 try {
     if (! file_exists($zipFile)) {
@@ -116,7 +116,7 @@ try {
     }
 
     @unlink($zipFile);
-    echo "SUCCESS: Extracted summative3-infinityfree.zip.\n";
+    echo "SUCCESS: Extracted summative4-infinityfree.zip.\n";
 
     if (file_exists(__DIR__.'/index2.html')) {
         @unlink(__DIR__.'/index2.html');

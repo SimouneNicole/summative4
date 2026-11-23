@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Automated FTP Deployment for Simoune Nicole's IT0049 TSA3 (summative3) to InfinityFree.
+Automated FTP Deployment for Simoune Nicole's IT0049 TSA4 (summative4) to InfinityFree.
 Reads credentials from environment variables or gitignored env.production, builds the lean zip,
-and uploads summative3-infinityfree.zip + extract.php into /htdocs on ftpupload.net.
+and uploads summative4-infinityfree.zip + extract.php into /htdocs on ftpupload.net.
 """
 
 import ftplib
@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-ZIP_PATH = BASE_DIR / "summative3-infinityfree.zip"
+ZIP_PATH = BASE_DIR / "summative4-infinityfree.zip"
 EXTRACT_PHP = BASE_DIR / "extract.php"
 ENV_PROD = BASE_DIR / "env.production"
 
@@ -34,7 +34,7 @@ def load_credentials() -> dict[str, str]:
     dotenv = parse_dotenv(ENV_PROD)
     ftp_user = os.getenv("FTP_USER") or dotenv.get("DB_USERNAME", "")
     ftp_pass = os.getenv("FTP_PASS") or dotenv.get("DB_PASSWORD", "")
-    app_url = os.getenv("APP_URL") or dotenv.get("APP_URL", "https://it0049-tsa3.infinityfreeapp.com")
+    app_url = os.getenv("APP_URL") or dotenv.get("APP_URL", "https://it0049-tsa4.infinityfreeapp.com")
 
     if not ftp_user or not ftp_pass or ftp_pass == "YOUR_VPANEL_PASSWORD":
         raise RuntimeError(

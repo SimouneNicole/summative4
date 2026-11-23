@@ -5,7 +5,7 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
 
-OUTPUT_ZIP="$DIR/summative3-infinityfree.zip"
+OUTPUT_ZIP="$DIR/summative4-infinityfree.zip"
 ENV_SOURCE="${ENV_SOURCE:-$DIR/env.production}"
 
 if [ ! -f "$ENV_SOURCE" ]; then
@@ -14,7 +14,7 @@ if [ ! -f "$ENV_SOURCE" ]; then
     exit 1
 fi
 
-echo "==> Packaging lean production build for InfinityFree (it0049-tsa3.infinityfreeapp.com)..."
+echo "==> Packaging lean production build for InfinityFree (it0049-tsa4)..."
 rm -f "$OUTPUT_ZIP"
 
 rsync -av \

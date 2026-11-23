@@ -1,10 +1,9 @@
-# Tasks for Today Management System — IT0049 TSA3 (Laravel)
+# Tasks for Today Management System — IT0049 TSA4 (Laravel)
 
-A Laravel 13 task management application built for **IT0049 (Web System Technologies) — Technical Summative Assessment 3 (TSA3)**. It rebuilds the CodeIgniter 4 TSA1 Tasks for Today Management System (`SimouneNicole/summative1`) with Laravel schema migrations, seeders, Eloquent ORM local query scopes, and Blade views styled in the **Liquid Glass** interface.
+A Laravel 13 task management application built for **IT0049 (Web System Technologies) — Technical Summative Assessment 4 (TSA4)**. Extending Simoune Nicole's TSA3 (`SimouneNicole/summative3`) **Liquid Glass** system, this version adds full validated task CRUD, soft-archiving via `is_archived`, **Laravel Breeze** authentication protecting task management actions, and automatic email notifications (`TaskCompletedMail`) dispatched via Laravel's `Mail` facade when a task is marked completed.
 
 - **Developer:** Simoune Nicole
-- **GitHub Repository:** [SimouneNicole/summative3](https://github.com/SimouneNicole/summative3)
-- **Live Deployment:** [https://it0049-tsa3.infinityfreeapp.com](https://it0049-tsa3.infinityfreeapp.com)
+- **GitHub Repository:** [SimouneNicole/summative4](https://github.com/SimouneNicole/summative4)
 
 ---
 
@@ -12,6 +11,7 @@ A Laravel 13 task management application built for **IT0049 (Web System Technolo
 
 - **PHP**: 8.3 or higher (`pdo_sqlite`, `pdo_mysql`, `mbstring`, `openssl`, `tokenizer`, `xml`, `ctype`, `json`)
 - **Composer**: 2.0 or higher
+- **Node.js & npm**: 18+ (for optional Breeze/Vite assets)
 - **Database**: SQLite 3 (local development/testing) or MySQL / MariaDB (production)
 
 ---
@@ -20,13 +20,14 @@ A Laravel 13 task management application built for **IT0049 (Web System Technolo
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/SimouneNicole/summative3.git
-   cd summative3
+   git clone https://github.com/SimouneNicole/summative4.git
+   cd summative4
    ```
 
-2. **Install Composer dependencies**:
+2. **Install dependencies**:
    ```bash
    composer install
+   npm install && npm run build
    ```
 
 3. **Configure environment and key**:
@@ -50,61 +51,81 @@ A Laravel 13 task management application built for **IT0049 (Web System Technolo
 
 ---
 
-## Application Routes
+## Authentication & Seeded Demo Credentials
 
-| Method | URI | Controller Action | Eloquent Query | Purpose |
-| :--- | :--- | :--- | :--- | :--- |
-| `GET` | `/` | `WelcomeController@index` | `Task::forToday()->orderBy('id')->get()` | Displays only tasks scheduled for today's date |
-| `GET` | `/tasks` | `TaskController@index` | `Task::orderedByDate()->get()` | Displays all tasks ordered chronologically by `task_date` |
-| `GET` | `/profile` | `ProfileController@index` | `User::query()->first()` | Displays the single user profile record |
-| `GET` | `/about` | `AboutController@index` | Static view | Identifies Simoune Nicole as developer and summarizes architecture |
+Laravel Breeze provides session authentication (`/login`, `/register`, `/logout`, password reset, and `/account/profile`).
+
+- **Publicly Viewable Routes:** `/`, `/tasks`, `/profile`, `/about`
+- **Protected Routes (`auth` middleware):** `/tasks/create`, `POST /tasks`, `/tasks/{task}/edit`, `PUT /tasks/{task}`, `DELETE /tasks/{task}`, `/account/profile`
+
+### Seeded Demo Account
+- **Email:** `katarina.ivanov@gmail.com`
+- **Username:** `Kat.1na`
+- **Password:** `password`
+
+You may also register a brand-new user account via `/register`.
 
 ---
 
-## Database Schema, Models & Seed Data
+## Mail Configuration (`TaskCompletedMail`)
 
-### Migrations (`database/migrations/`)
-- `users` (`0001_01_01_000000_create_users_table.php`):
-  - `id` (`BIGINT UNSIGNED PK`)
-  - `username` (`VARCHAR(50) UNIQUE`)
-  - `full_name` (`VARCHAR(100)`)
-  - `email` (`VARCHAR(100)`)
-  - `created_at`, `updated_at` (`TIMESTAMPS`)
-- `tasks` (`2026_11_14_000001_create_tasks_table.php`):
-  - `id` (`BIGINT UNSIGNED PK`)
-  - `title` (`VARCHAR(255)`)
-  - `status` (`VARCHAR(20) DEFAULT 'pending'`, cast via `App\Enums\TaskStatus`: `pending`, `ongoing`, `completed`)
-  - `task_date` (`DATE INDEX`)
-  - `created_at`, `updated_at` (`TIMESTAMPS`)
+When an authenticated user updates a task and changes its status from `pending` or `ongoing` to `completed`, `TaskController@update` sends [`App\Mail\TaskCompletedMail`](app/Mail/TaskCompletedMail.php) (rendered with [`resources/views/emails/task-completed.blade.php`](resources/views/emails/task-completed.blade.php)) via `Mail::to(...)`. Updating an already-completed task will **not** resend the email.
 
-### Eloquent Models (`app/Models/`)
-- `App\Models\Task`: casts `task_date` (`date`) and `status` (`TaskStatus` enum) and defines Laravel 13 `#[Scope]` local scopes `forToday()` and `orderedByDate()`.
-- `App\Models\User`: maps the `users` table (`username`, `full_name`, `email`).
+Configure mail settings in `.env`:
 
-### Seeders (`database/seeders/`)
-- `UserSeeder`: seeds 1 canonical user (`Kat.1na`, `Katarina Ivanov`, `katarina.ivanov@gmail.com`).
-- `TaskSeeder`: seeds 9 tasks spanning 4 distinct dates (yesterday, today, tomorrow, and +2 days), preserving all original TSA1 titles and workflow states.
-- `DatabaseSeeder`: executes `[UserSeeder::class, TaskSeeder::class]`.
+```dotenv
+# Local / Shared Hosting Log Driver (writes rendered emails to storage/logs/laravel.log)
+MAIL_MAILER=log
+MAIL_FROM_ADDRESS="hello@example.com"
+MAIL_FROM_NAME="${APP_NAME}"
+TASK_NOTIFICATION_EMAIL="katarina.ivanov@gmail.com"
+```
+
+To test with an SMTP sandbox (e.g., Mailpit, Mailtrap, or Gmail SMTP), set:
+
+```dotenv
+MAIL_MAILER=smtp
+MAIL_HOST=sandbox.smtp.mailtrap.io
+MAIL_PORT=2525
+MAIL_USERNAME=your_username
+MAIL_PASSWORD=your_password
+TASK_NOTIFICATION_EMAIL="katarina.ivanov@gmail.com"
+```
+
+---
+
+## Application Routes
+
+| Method | URI | Middleware | Controller Action | Purpose |
+| :--- | :--- | :--- | :--- | :--- |
+| `GET` | `/` | Public | `WelcomeController@index` | Non-archived tasks scheduled for today |
+| `GET` | `/tasks` | Public | `TaskController@index` | All non-archived tasks ordered by `task_date` |
+| `GET` | `/profile` | Public | `ProfileController@index` | Public user profile summary |
+| `GET` | `/about` | Public | `AboutController@index` | Application & architecture overview |
+| `GET` | `/tasks/create` | `auth` | `TaskController@create` | Create task form |
+| `POST` | `/tasks` | `auth` | `TaskController@store` | Validate (`SaveTaskRequest`) & insert task |
+| `GET` | `/tasks/{task}/edit` | `auth` | `TaskController@edit` | Edit pre-filled task form |
+| `PUT` | `/tasks/{task}` | `auth` | `TaskController@update` | Validate, update, & mail on transition to `completed` |
+| `DELETE` | `/tasks/{task}` | `auth` | `TaskController@destroy` | Soft-archive task (`is_archived = true`) |
+| `GET/PATCH/DELETE` | `/account/profile` | `auth` | `ProfileController@edit/update/destroy` | Breeze account settings |
 
 ---
 
 ## Automated Testing
 
-Run the PHPUnit test suite against an isolated in-memory SQLite database:
+Run the full PHPUnit test suite (TSA3 foundations, Breeze auth/profile, TSA4 CRUD, soft-archive, validation/`old()`, and `Mail::fake()` notification tests):
 
 ```bash
 php artisan test
 ```
 
-The test suite verifies seeder record counts (`1` user, `>= 8` tasks across `>= 3` dates), Eloquent `forToday` and `orderedByDate` scopes, database schema constraints (`status` default `'pending'`, unique `username`), and HTTP 200 content assertions for `/`, `/tasks`, `/profile`, and `/about`.
-
 ---
 
 ## InfinityFree Deployment
 
-1. Copy `env.production.example` to `env.production` and set `APP_KEY` and `DB_PASSWORD`.
+1. Copy `env.production.example` to `env.production` (gitignored) and set `APP_KEY`, `APP_URL`, `DB_*`, `MAIL_*`, and `TASK_NOTIFICATION_EMAIL`.
 2. Run `./build-infinityfree-zip.sh` (or `./deploy-infinityfree.sh` to upload via FTP).
-3. Open `extract.php` on the live domain to unpack assets, configure storage permissions, and provision MySQL from `database/schema_export.sql`.
+3. Open `extract.php` on the live domain to unpack assets, set permissions, and provision MySQL from `database/schema_export.sql` (with automatic SQLite fallback).
 
 ---
 
