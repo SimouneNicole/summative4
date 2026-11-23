@@ -14,7 +14,7 @@ if [ ! -f "$ENV_SOURCE" ]; then
     exit 1
 fi
 
-echo "==> Packaging lean production build for InfinityFree (it0049-tsa4)..."
+echo "==> Packaging lean production build for InfinityFree (it0049-summative4.infinityfree.io)..."
 rm -f "$OUTPUT_ZIP"
 
 rsync -av \

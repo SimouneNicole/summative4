@@ -34,7 +34,7 @@ def load_credentials() -> dict[str, str]:
     dotenv = parse_dotenv(ENV_PROD)
     ftp_user = os.getenv("FTP_USER") or dotenv.get("DB_USERNAME", "")
     ftp_pass = os.getenv("FTP_PASS") or dotenv.get("DB_PASSWORD", "")
-    app_url = os.getenv("APP_URL") or dotenv.get("APP_URL", "https://it0049-tsa4.infinityfreeapp.com")
+    app_url = os.getenv("APP_URL") or dotenv.get("APP_URL", "https://it0049-summative4.infinityfree.io")
 
     if not ftp_user or not ftp_pass or ftp_pass == "YOUR_VPANEL_PASSWORD":
         raise RuntimeError(

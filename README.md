@@ -4,6 +4,7 @@ A Laravel 13 task management application built for **IT0049 (Web System Technolo
 
 - **Developer:** Simoune Nicole
 - **GitHub Repository:** [SimouneNicole/summative4](https://github.com/SimouneNicole/summative4)
+- **Live Deployment:** [https://it0049-summative4.infinityfree.io](https://it0049-summative4.infinityfree.io)
 
 ---
 

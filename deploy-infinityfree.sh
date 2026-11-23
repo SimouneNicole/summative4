@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ====================================================================
 # IT0049 TSA4 - Automated FTP Deployment to InfinityFree
-# Simoune Nicole - it0049-tsa4.infinityfreeapp.com
+# Simoune Nicole - it0049-summative4.infinityfree.io
 # ====================================================================
 
 set -euo pipefail
